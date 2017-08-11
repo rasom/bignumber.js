@@ -1141,15 +1141,17 @@
 
         // Handle values that fail the validity test in BigNumber.
         parseNumeric = (function () {
-            var basePrefix = /^(-?)0([xbo])(?=\w[\w.]*$)/i,
+            var basePrefix = /^((-?)0([xbo]))(\w[\w.]*)$/i,
                 dotAfter = /^([^.]+)\.$/,
                 dotBefore = /^\.([^.]+)$/,
                 isInfinityOrNaN = /^-?(Infinity|NaN)$/,
-                whitespaceOrPlus = /^\s*\+(?=[\w.])|^\s+|\s+$/g;
+                whitespaceOrPlus = /^\s*\+([\w.])|^\s+|\s+$/g;
 
             return function ( x, str, num, b ) {
                 var base,
-                    s = num ? str : str.replace( whitespaceOrPlus, '' );
+                    s = num ? str : str.replace(whitespaceOrPlus, function (m, p1) {
+                        return m.indexOf('+') > -1 && p1 !== '' ? p1 : '';
+                    });
 
                 // No exception on ±Infinity or NaN.
                 if ( isInfinityOrNaN.test(s) ) {
@@ -1157,10 +1159,10 @@
                 } else {
                     if ( !num ) {
 
-                        // basePrefix = /^(-?)0([xbo])(?=\w[\w.]*$)/i
-                        s = s.replace( basePrefix, function ( m, p1, p2 ) {
+                        // basePrefix = /^((-?)0([xbo]))(\w[\w.]*)$/i
+                        s = s.replace( basePrefix, function ( s, m, p1, p2, p3 ) {
                             base = ( p2 = p2.toLowerCase() ) == 'x' ? 16 : p2 == 'b' ? 2 : 8;
-                            return !b || b == base ? p1 : m;
+                            return (!b || b == base ? p1 : m) + p3;
                         });
 
                         if (b) {
